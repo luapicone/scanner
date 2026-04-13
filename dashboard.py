@@ -42,6 +42,16 @@ HTML = """
   </div>
 
   <div class="section">
+    <h2>Último scan, setups aceptados</h2>
+    <div id="latestSetups"></div>
+  </div>
+
+  <div class="section">
+    <h2>Último scan, descartes</h2>
+    <div id="latestRejected"></div>
+  </div>
+
+  <div class="section">
     <h2>Historial reciente</h2>
     <div id="history"></div>
   </div>
@@ -83,6 +93,26 @@ HTML = """
         { key: 'sl', label: 'SL' },
         { key: 'result', label: 'Status' },
       ], data.pending_signals);
+
+      renderTable('latestSetups', [
+        { key: 'symbol', label: 'Symbol' },
+        { key: 'direction', label: 'Direction' },
+        { key: 'score', label: 'Score' },
+        { key: 'confidence', label: 'Confidence' },
+        { key: 'entry', label: 'Entry' },
+        { key: 'tp', label: 'TP' },
+        { key: 'sl', label: 'SL' },
+        { key: 'reason', label: 'Reason' },
+      ], data.latest_accepted);
+
+      renderTable('latestRejected', [
+        { key: 'symbol', label: 'Symbol' },
+        { key: 'reason', label: 'Reason' },
+        { key: 'fast_rsi', label: 'Fast RSI' },
+        { key: 'context_rsi', label: 'Context RSI' },
+        { key: 'stretch', label: 'Stretch' },
+        { key: 'zscore', label: 'ZScore' },
+      ], data.latest_rejected);
 
       renderTable('history', [
         { key: 'timestamp', label: 'Timestamp' },
@@ -135,6 +165,9 @@ def api_dashboard():
 
     recent_history = list(reversed(rows))[:20]
     pending_signals = [row for row in reversed(rows) if row.get("result") == "PENDING"][:20]
+    latest_scan = report.get("results", [])
+    latest_accepted = [item for item in latest_scan if item.get("accepted")]
+    latest_rejected = [item for item in latest_scan if not item.get("accepted")]
 
     return jsonify(
         {
@@ -148,7 +181,9 @@ def api_dashboard():
             },
             "pending_signals": pending_signals,
             "recent_history": recent_history,
-            "latest_scan": report.get("results", []),
+            "latest_scan": latest_scan,
+            "latest_accepted": latest_accepted,
+            "latest_rejected": latest_rejected,
         }
     )
 
