@@ -1,6 +1,6 @@
 import csv
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 HISTORY_FILE = "signal_history.csv"
 
@@ -17,6 +17,7 @@ FIELDNAMES = [
     "invalidation",
     "result",
     "evaluated_at",
+    "expiry_at",
 ]
 
 
@@ -55,6 +56,7 @@ def append_signals(results, path=HISTORY_FILE):
                     "invalidation": item["invalidation"],
                     "result": "PENDING",
                     "evaluated_at": "",
+                    "expiry_at": (datetime.now(timezone.utc) + timedelta(minutes=60)).isoformat(),
                 }
             )
 
@@ -63,10 +65,14 @@ def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HI
     rows = load_rows(path)
     updated = False
 
+    now = datetime.now(timezone.utc)
+
     for row in rows:
         if row.get("result") != "PENDING":
             continue
 
+        expiry_at = row.get("expiry_at")
+        expiry_dt = datetime.fromisoformat(expiry_at) if expiry_at else now
         symbol = row["symbol"]
         direction = row["direction"]
         tp = float(row["tp"])
@@ -82,25 +88,30 @@ def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HI
             if direction == "LONG":
                 if low <= sl:
                     row["result"] = "LOSS"
-                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    row["evaluated_at"] = now.isoformat()
                     updated = True
                     break
                 if high >= tp:
                     row["result"] = "WIN"
-                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    row["evaluated_at"] = now.isoformat()
                     updated = True
                     break
             else:
                 if high >= sl:
                     row["result"] = "LOSS"
-                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    row["evaluated_at"] = now.isoformat()
                     updated = True
                     break
                 if low <= tp:
                     row["result"] = "WIN"
-                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    row["evaluated_at"] = now.isoformat()
                     updated = True
                     break
+
+        if row.get("result") == "PENDING" and now >= expiry_dt:
+            row["result"] = "EXPIRED"
+            row["evaluated_at"] = now.isoformat()
+            updated = True
 
     if updated:
         save_rows(rows, path)
@@ -108,20 +119,23 @@ def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HI
 
 def summarize_history(path=HISTORY_FILE):
     if not os.path.exists(path):
-        return {"total": 0, "wins": 0, "losses": 0, "win_rate_pct": 0.0}
+        return {"total": 0, "wins": 0, "losses": 0, "expired": 0, "win_rate_pct": 0.0}
 
-    total = wins = losses = 0
+    total = wins = losses = expired = 0
     with open(path, "r", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             result = row.get("result", "").upper()
-            if result not in {"WIN", "LOSS"}:
+            if result not in {"WIN", "LOSS", "EXPIRED"}:
                 continue
             total += 1
             if result == "WIN":
                 wins += 1
-            else:
+            elif result == "LOSS":
                 losses += 1
+            else:
+                expired += 1
 
-    win_rate = (wins / total * 100) if total else 0.0
-    return {"total": total, "wins": wins, "losses": losses, "win_rate_pct": round(win_rate, 2)}
+    settled = wins + losses
+    win_rate = (wins / settled * 100) if settled else 0.0
+    return {"total": total, "wins": wins, "losses": losses, "expired": expired, "win_rate_pct": round(win_rate, 2)}

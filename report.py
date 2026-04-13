@@ -11,7 +11,7 @@ def build_report(results, history_summary=None):
     lines.append("===== SCANNER REPORT =====")
     if history_summary:
         lines.append(
-            f"history: total={history_summary['total']} | wins={history_summary['wins']} | losses={history_summary['losses']} | win_rate={history_summary['win_rate_pct']}%"
+            f"history: total={history_summary['total']} | wins={history_summary['wins']} | losses={history_summary['losses']} | expired={history_summary['expired']} | win_rate={history_summary['win_rate_pct']}%"
         )
     lines.append("")
     lines.append("TOP SETUPS")
