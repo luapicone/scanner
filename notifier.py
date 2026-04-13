@@ -21,6 +21,7 @@ def build_signal_message(signal):
         f"🚨 **SETUP DETECTADO** {direction_emoji}\n"
         f"**{signal['symbol']}** | {signal['direction']}\n"
         f"Score: `{signal['score']}` | Confidence: `{signal['confidence']}`\n"
+        f"Entry status: `{signal.get('entry_status', 'ENTRY_READY')}` | Progress: `{signal.get('move_progress_pct', 0)}%`\n"
         f"Entry: `{signal['entry']}`\n"
         f"Zone: `{signal.get('entry_zone_low', signal['entry'])}` -> `{signal.get('entry_zone_high', signal['entry'])}`\n"
         f"TP: `{signal['tp']}` | SL: `{signal['sl']}`\n"

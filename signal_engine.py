@@ -73,18 +73,29 @@ def evaluate_symbol(symbol, fast_rows, context_rows):
 
     if direction == "LONG":
         entry = last_price
-        entry_zone_low = last_price - entry_buffer
-        entry_zone_high = last_price + (entry_buffer * 0.35)
+        entry_zone_low = last_price - (entry_buffer * 1.25)
+        entry_zone_high = last_price + (entry_buffer * 0.20)
         tp = last_price + target_move
         sl = last_price - stop_move
         invalidation = sl
+        freshness_distance = max(tp - entry, 1e-9)
+        move_progress = max(0.0, (last_price - entry_zone_low) / freshness_distance)
     else:
         entry = last_price
-        entry_zone_low = last_price - (entry_buffer * 0.35)
-        entry_zone_high = last_price + entry_buffer
+        entry_zone_low = last_price - (entry_buffer * 0.20)
+        entry_zone_high = last_price + (entry_buffer * 1.25)
         tp = last_price - target_move
         sl = last_price + stop_move
         invalidation = sl
+        freshness_distance = max(entry_zone_high - tp, 1e-9)
+        move_progress = max(0.0, (entry_zone_high - last_price) / freshness_distance)
+
+    if move_progress <= 0.33:
+        entry_status = "ENTRY_READY"
+    elif move_progress <= 0.66:
+        entry_status = "ENTRY_CAUTION"
+    else:
+        entry_status = "ENTRY_LATE"
 
     return {
         "symbol": symbol,
@@ -100,6 +111,8 @@ def evaluate_symbol(symbol, fast_rows, context_rows):
         "entry": round(entry, 6),
         "entry_zone_low": round(entry_zone_low, 6),
         "entry_zone_high": round(entry_zone_high, 6),
+        "entry_status": entry_status,
+        "move_progress_pct": round(min(move_progress, 1.0) * 100, 2),
         "tp": round(tp, 6),
         "sl": round(sl, 6),
         "invalidation": round(invalidation, 6),

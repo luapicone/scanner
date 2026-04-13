@@ -18,7 +18,7 @@ def build_report(results, history_summary=None):
     if not accepted:
         lines.append("- no setups accepted")
     for item in accepted:
-        lines.append(f"- {item['symbol']} {item['direction']} | score={item['score']} | confidence={item['confidence']}")
+        lines.append(f"- {item['symbol']} {item['direction']} | score={item['score']} | confidence={item['confidence']} | entry_status={item['entry_status']} | progress={item['move_progress_pct']}%")
         lines.append(f"  price={item['last_price']} | entry={item['entry']} | zone={item['entry_zone_low']} -> {item['entry_zone_high']} | tp={item['tp']} | sl={item['sl']} | invalidation={item['invalidation']}")
         lines.append(f"  rsi={item['fast_rsi']} | context={item['context_rsi']} | stretch={item['stretch']} | zscore={item['zscore']}")
         lines.append(f"  reason={item['reason']}")

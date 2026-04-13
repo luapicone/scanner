@@ -99,6 +99,8 @@ HTML = """
         { key: 'direction', label: 'Direction' },
         { key: 'score', label: 'Score' },
         { key: 'confidence', label: 'Confidence' },
+        { key: 'entry_status', label: 'Entry Status' },
+        { key: 'move_progress_pct', label: 'Progress %' },
         { key: 'entry', label: 'Entry' },
         { key: 'tp', label: 'TP' },
         { key: 'sl', label: 'SL' },
