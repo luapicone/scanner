@@ -5,6 +5,7 @@ from datetime import datetime
 from config import CANDLE_LIMIT, LOOP_INTERVAL_SECONDS, SYMBOLS, TIMEFRAME_CONTEXT, TIMEFRAME_FAST
 from data_fetcher import DataFetcher
 from history import append_signals, evaluate_pending_signals, summarize_history
+from notifier import send_discord_alert
 from report import build_report, export_report
 from signal_engine import evaluate_symbol
 
@@ -19,7 +20,13 @@ def run_cycle(fetcher):
         result = evaluate_symbol(symbol, fast_rows, context_rows)
         results.append(result)
 
-    append_signals(results)
+    new_signals = append_signals(results)
+    for signal in new_signals:
+        try:
+            send_discord_alert(signal)
+        except Exception as exc:
+            print(f"discord alert failed for {signal['symbol']}: {exc}")
+
     history_summary = summarize_history()
     export_report(results, history_summary=history_summary)
     print(f"\n[{datetime.now().isoformat(timespec='seconds')}]")

@@ -100,3 +100,16 @@ Después abrir en el navegador:
 ```text
 http://127.0.0.1:5050
 ```
+
+## Alertas por Discord
+1. Crear un archivo `.env` en la raíz del proyecto
+2. Agregar:
+```env
+DISCORD_WEBHOOK_URL=tu_webhook_de_discord
+```
+3. Ejecutar el scanner en loop:
+```bash
+python3 main.py --loop
+```
+
+Cuando detecte una señal nueva aceptada, mandará una alerta al canal configurado.

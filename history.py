@@ -20,6 +20,7 @@ FIELDNAMES = [
     "result",
     "evaluated_at",
     "expiry_at",
+    "alert_sent",
 ]
 
 
@@ -41,6 +42,7 @@ def append_signals(results, path=HISTORY_FILE):
     accepted = [r for r in results if r.get("accepted")]
     rows = load_rows(path)
     now = datetime.now(timezone.utc)
+    new_signals = []
 
     for item in accepted:
         duplicate_found = False
@@ -55,24 +57,26 @@ def append_signals(results, path=HISTORY_FILE):
         if duplicate_found:
             continue
 
-        rows.append(
-            {
-                "timestamp": now.isoformat(),
-                "symbol": item["symbol"],
-                "direction": item["direction"],
-                "score": item["score"],
-                "confidence": item["confidence"],
-                "entry": item["entry"],
-                "tp": item["tp"],
-                "sl": item["sl"],
-                "invalidation": item["invalidation"],
-                "result": "PENDING",
-                "evaluated_at": "",
-                "expiry_at": (now + timedelta(minutes=60)).isoformat(),
-            }
-        )
+        row = {
+            "timestamp": now.isoformat(),
+            "symbol": item["symbol"],
+            "direction": item["direction"],
+            "score": item["score"],
+            "confidence": item["confidence"],
+            "entry": item["entry"],
+            "tp": item["tp"],
+            "sl": item["sl"],
+            "invalidation": item["invalidation"],
+            "result": "PENDING",
+            "evaluated_at": "",
+            "expiry_at": (now + timedelta(minutes=60)).isoformat(),
+            "alert_sent": "0",
+        }
+        rows.append(row)
+        new_signals.append(item)
 
     save_rows(rows, path)
+    return new_signals
 
 
 def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HISTORY_FILE):
