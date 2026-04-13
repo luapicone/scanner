@@ -67,9 +67,9 @@ def evaluate_symbol(symbol, fast_rows, context_rows):
     zscore_abs = abs(price_zscore)
     score_boost = max(score, SCORE_MIN)
 
-    entry_buffer = max(last_price * 0.0008, last_price * stretch_abs * 0.20)
-    target_move = max(last_price * 0.0038, last_price * stretch_abs * (1.55 + score_boost))
-    stop_move = max(last_price * 0.0018, target_move * (0.42 + max(0.0, 1.0 - zscore_abs) * 0.16))
+    entry_buffer = max(last_price * 0.0015, last_price * stretch_abs * 0.35)
+    target_move = max(last_price * 0.0065, last_price * stretch_abs * (2.4 + score_boost))
+    stop_move = max(last_price * 0.0024, target_move * (0.38 + max(0.0, 1.0 - zscore_abs) * 0.14))
 
     if direction == "LONG":
         entry = last_price
