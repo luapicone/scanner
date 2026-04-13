@@ -73,3 +73,19 @@ Más adelante:
 - dashboard o canal de alertas
 - métricas de calidad de señales
 - refinamiento de producto
+
+## Uso rápido
+### corrida única
+```bash
+python3 main.py
+```
+
+### loop continuo
+```bash
+python3 main.py --loop
+```
+
+### loop con intervalo custom
+```bash
+python3 main.py --loop --interval 120
+```
