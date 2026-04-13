@@ -3,6 +3,11 @@ SYMBOLS = [
     "ETH/USDT:USDT",
     "SOL/USDT:USDT",
     "XRP/USDT:USDT",
+    "BNB/USDT:USDT",
+    "ADA/USDT:USDT",
+    "DOGE/USDT:USDT",
+    "LINK/USDT:USDT",
+    "AVAX/USDT:USDT",
 ]
 
 TIMEFRAME_FAST = "5m"
