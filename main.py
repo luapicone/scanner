@@ -1,12 +1,13 @@
 from config import CANDLE_LIMIT, SYMBOLS, TIMEFRAME_CONTEXT, TIMEFRAME_FAST
 from data_fetcher import DataFetcher
-from history import append_signals, summarize_history
+from history import append_signals, evaluate_pending_signals, summarize_history
 from report import build_report, export_report
 from signal_engine import evaluate_symbol
 
 
 def main():
     fetcher = DataFetcher()
+    evaluate_pending_signals(fetcher, timeframe=TIMEFRAME_FAST)
     results = []
 
     for symbol in SYMBOLS:

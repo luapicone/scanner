@@ -16,7 +16,22 @@ FIELDNAMES = [
     "sl",
     "invalidation",
     "result",
+    "evaluated_at",
 ]
+
+
+def load_rows(path=HISTORY_FILE):
+    if not os.path.exists(path):
+        return []
+    with open(path, "r", newline="", encoding="utf-8") as file:
+        return list(csv.DictReader(file))
+
+
+def save_rows(rows, path=HISTORY_FILE):
+    with open(path, "w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def append_signals(results, path=HISTORY_FILE):
@@ -39,8 +54,56 @@ def append_signals(results, path=HISTORY_FILE):
                     "sl": item["sl"],
                     "invalidation": item["invalidation"],
                     "result": "PENDING",
+                    "evaluated_at": "",
                 }
             )
+
+
+def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HISTORY_FILE):
+    rows = load_rows(path)
+    updated = False
+
+    for row in rows:
+        if row.get("result") != "PENDING":
+            continue
+
+        symbol = row["symbol"]
+        direction = row["direction"]
+        tp = float(row["tp"])
+        sl = float(row["sl"])
+        candles = fetcher.fetch_ohlcv(symbol, timeframe=timeframe, limit=lookahead_bars)
+
+        if not candles:
+            continue
+
+        for candle in candles:
+            high = float(candle[2])
+            low = float(candle[3])
+            if direction == "LONG":
+                if low <= sl:
+                    row["result"] = "LOSS"
+                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    updated = True
+                    break
+                if high >= tp:
+                    row["result"] = "WIN"
+                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    updated = True
+                    break
+            else:
+                if high >= sl:
+                    row["result"] = "LOSS"
+                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    updated = True
+                    break
+                if low <= tp:
+                    row["result"] = "WIN"
+                    row["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+                    updated = True
+                    break
+
+    if updated:
+        save_rows(rows, path)
 
 
 def summarize_history(path=HISTORY_FILE):
