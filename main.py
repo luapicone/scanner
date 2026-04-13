@@ -28,6 +28,8 @@ def run_cycle(fetcher):
 
     new_signals = append_signals(results)
     for signal in new_signals:
+        if signal.get("confidence") != "high":
+            continue
         try:
             send_discord_alert(signal)
         except Exception as exc:
