@@ -5,13 +5,19 @@ from datetime import datetime
 from config import CANDLE_LIMIT, LOOP_INTERVAL_SECONDS, SYMBOLS, TIMEFRAME_CONTEXT, TIMEFRAME_FAST
 from data_fetcher import DataFetcher
 from history import append_signals, evaluate_pending_signals, summarize_history
-from notifier import send_discord_alert
+from notifier import send_discord_alert, send_discord_result_alert
 from report import build_report, export_report
 from signal_engine import evaluate_symbol
 
 
 def run_cycle(fetcher):
-    evaluate_pending_signals(fetcher, timeframe=TIMEFRAME_FAST)
+    settled_signals = evaluate_pending_signals(fetcher, timeframe=TIMEFRAME_FAST)
+    for row in settled_signals:
+        try:
+            send_discord_result_alert(row)
+        except Exception as exc:
+            print(f"discord result alert failed for {row['symbol']}: {exc}")
+
     results = []
 
     for symbol in SYMBOLS:

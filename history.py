@@ -21,6 +21,7 @@ FIELDNAMES = [
     "evaluated_at",
     "expiry_at",
     "alert_sent",
+    "result_alert_sent",
 ]
 
 
@@ -71,6 +72,7 @@ def append_signals(results, path=HISTORY_FILE):
             "evaluated_at": "",
             "expiry_at": (now + timedelta(minutes=60)).isoformat(),
             "alert_sent": "0",
+            "result_alert_sent": "0",
         }
         rows.append(row)
         new_signals.append(item)
@@ -82,6 +84,7 @@ def append_signals(results, path=HISTORY_FILE):
 def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HISTORY_FILE):
     rows = load_rows(path)
     updated = False
+    newly_settled = []
 
     now = datetime.now(timezone.utc)
 
@@ -108,31 +111,37 @@ def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HI
                     row["result"] = "LOSS"
                     row["evaluated_at"] = now.isoformat()
                     updated = True
+                    newly_settled.append(row.copy())
                     break
                 if high >= tp:
                     row["result"] = "WIN"
                     row["evaluated_at"] = now.isoformat()
                     updated = True
+                    newly_settled.append(row.copy())
                     break
             else:
                 if high >= sl:
                     row["result"] = "LOSS"
                     row["evaluated_at"] = now.isoformat()
                     updated = True
+                    newly_settled.append(row.copy())
                     break
                 if low <= tp:
                     row["result"] = "WIN"
                     row["evaluated_at"] = now.isoformat()
                     updated = True
+                    newly_settled.append(row.copy())
                     break
 
         if row.get("result") == "PENDING" and now >= expiry_dt:
             row["result"] = "EXPIRED"
             row["evaluated_at"] = now.isoformat()
             updated = True
+            newly_settled.append(row.copy())
 
     if updated:
         save_rows(rows, path)
+    return newly_settled
 
 
 def summarize_history(path=HISTORY_FILE):
