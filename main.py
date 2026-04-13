@@ -5,7 +5,7 @@ from datetime import datetime
 from config import CANDLE_LIMIT, LOOP_INTERVAL_SECONDS, SYMBOLS, TIMEFRAME_CONTEXT, TIMEFRAME_FAST
 from data_fetcher import DataFetcher
 from history import append_signals, evaluate_pending_signals, summarize_history
-from notifier import send_discord_alert, send_discord_result_alert
+from notifier import send_discord_alert, send_discord_result_alert, send_discord_test_alert
 from report import build_report, export_report
 from signal_engine import evaluate_symbol
 
@@ -43,7 +43,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--loop", action="store_true", help="run scanner continuously")
     parser.add_argument("--interval", type=int, default=LOOP_INTERVAL_SECONDS, help="seconds between scans in loop mode")
+    parser.add_argument("--test-discord", action="store_true", help="send a test message to discord webhook")
     args = parser.parse_args()
+
+    if args.test_discord:
+        send_discord_test_alert()
+        print("discord test alert sent")
+        return
 
     fetcher = DataFetcher()
 

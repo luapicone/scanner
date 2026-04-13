@@ -47,3 +47,7 @@ def send_discord_alert(signal):
 
 def send_discord_result_alert(row):
     return _post_to_discord(build_result_message(row))
+
+
+def send_discord_test_alert():
+    return _post_to_discord("🧪 **SCANNER TEST**\nWebhook funcionando correctamente.")

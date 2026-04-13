@@ -107,7 +107,11 @@ http://127.0.0.1:5050
 ```env
 DISCORD_WEBHOOK_URL=tu_webhook_de_discord
 ```
-3. Ejecutar el scanner en loop:
+3. Probar webhook:
+```bash
+python3 main.py --test-discord
+```
+4. Ejecutar el scanner en loop:
 ```bash
 python3 main.py --loop
 ```
