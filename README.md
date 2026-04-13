@@ -89,3 +89,14 @@ python3 main.py --loop
 ```bash
 python3 main.py --loop --interval 120
 ```
+
+## Dashboard local
+### correr dashboard
+```bash
+python3 dashboard.py
+```
+
+Después abrir en el navegador:
+```text
+http://127.0.0.1:5050
+```
