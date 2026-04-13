@@ -2,6 +2,8 @@ import csv
 import os
 from datetime import datetime, timedelta, timezone
 
+from config import SIGNAL_DEDUP_MINUTES
+
 HISTORY_FILE = "signal_history.csv"
 
 
@@ -37,28 +39,40 @@ def save_rows(rows, path=HISTORY_FILE):
 
 def append_signals(results, path=HISTORY_FILE):
     accepted = [r for r in results if r.get("accepted")]
-    file_exists = os.path.exists(path)
-    with open(path, "a", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
-        if not file_exists:
-            writer.writeheader()
-        for item in accepted:
-            writer.writerow(
-                {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "symbol": item["symbol"],
-                    "direction": item["direction"],
-                    "score": item["score"],
-                    "confidence": item["confidence"],
-                    "entry": item["entry"],
-                    "tp": item["tp"],
-                    "sl": item["sl"],
-                    "invalidation": item["invalidation"],
-                    "result": "PENDING",
-                    "evaluated_at": "",
-                    "expiry_at": (datetime.now(timezone.utc) + timedelta(minutes=60)).isoformat(),
-                }
-            )
+    rows = load_rows(path)
+    now = datetime.now(timezone.utc)
+
+    for item in accepted:
+        duplicate_found = False
+        for row in reversed(rows):
+            if row.get("symbol") != item["symbol"] or row.get("direction") != item["direction"]:
+                continue
+            row_time = datetime.fromisoformat(row["timestamp"])
+            if now - row_time <= timedelta(minutes=SIGNAL_DEDUP_MINUTES):
+                duplicate_found = True
+            break
+
+        if duplicate_found:
+            continue
+
+        rows.append(
+            {
+                "timestamp": now.isoformat(),
+                "symbol": item["symbol"],
+                "direction": item["direction"],
+                "score": item["score"],
+                "confidence": item["confidence"],
+                "entry": item["entry"],
+                "tp": item["tp"],
+                "sl": item["sl"],
+                "invalidation": item["invalidation"],
+                "result": "PENDING",
+                "evaluated_at": "",
+                "expiry_at": (now + timedelta(minutes=60)).isoformat(),
+            }
+        )
+
+    save_rows(rows, path)
 
 
 def evaluate_pending_signals(fetcher, timeframe="5m", lookahead_bars=12, path=HISTORY_FILE):
