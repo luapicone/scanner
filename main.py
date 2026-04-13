@@ -1,6 +1,6 @@
 from config import CANDLE_LIMIT, SYMBOLS, TIMEFRAME_CONTEXT, TIMEFRAME_FAST
 from data_fetcher import DataFetcher
-from report import build_report
+from report import build_report, export_report
 from signal_engine import evaluate_symbol
 
 
@@ -14,6 +14,7 @@ def main():
         result = evaluate_symbol(symbol, fast_rows, context_rows)
         results.append(result)
 
+    export_report(results)
     print(build_report(results))
 
 

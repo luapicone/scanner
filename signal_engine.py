@@ -10,6 +10,14 @@ from config import (
 from indicators import rolling_vwap, rsi, zscore
 
 
+def _confidence_label(score):
+    if score >= 0.85:
+        return "high"
+    if score >= 0.7:
+        return "medium"
+    return "moderate"
+
+
 def evaluate_symbol(symbol, fast_rows, context_rows):
     fast_closes = [row[4] for row in fast_rows]
     fast_volumes = [row[5] for row in fast_rows]
@@ -55,14 +63,34 @@ def evaluate_symbol(symbol, fast_rows, context_rows):
             "direction": direction,
         }
 
+    stretch_abs = abs(stretch)
+    base_move = max(last_price * max(stretch_abs, 0.0015), last_price * 0.002)
+
+    if direction == "LONG":
+        entry = last_price
+        tp = last_price + base_move
+        sl = last_price - (base_move * 0.75)
+        invalidation = sl
+    else:
+        entry = last_price
+        tp = last_price - base_move
+        sl = last_price + (base_move * 0.75)
+        invalidation = sl
+
     return {
         "symbol": symbol,
         "accepted": True,
         "direction": direction,
         "score": round(score, 4),
+        "confidence": _confidence_label(score),
         "fast_rsi": round(fast_rsi, 4),
         "context_rsi": round(context_rsi, 4),
         "stretch": round(stretch, 6),
         "zscore": round(price_zscore, 4),
         "last_price": round(last_price, 6),
+        "entry": round(entry, 6),
+        "tp": round(tp, 6),
+        "sl": round(sl, 6),
+        "invalidation": round(invalidation, 6),
+        "reason": f"reversion setup accepted with stretch {round(stretch, 6)} and zscore {round(price_zscore, 4)}",
     }
