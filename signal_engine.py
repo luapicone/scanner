@@ -64,17 +64,26 @@ def evaluate_symbol(symbol, fast_rows, context_rows):
         }
 
     stretch_abs = abs(stretch)
-    base_move = max(last_price * max(stretch_abs, 0.0015), last_price * 0.002)
+    zscore_abs = abs(price_zscore)
+    score_boost = max(score, SCORE_MIN)
+
+    entry_buffer = max(last_price * 0.0005, last_price * stretch_abs * 0.15)
+    target_move = max(last_price * 0.002, last_price * stretch_abs * (0.9 + score_boost))
+    stop_move = max(last_price * 0.0012, target_move * (0.5 + max(0.0, 0.9 - zscore_abs) * 0.2))
 
     if direction == "LONG":
         entry = last_price
-        tp = last_price + base_move
-        sl = last_price - (base_move * 0.75)
+        entry_zone_low = last_price - entry_buffer
+        entry_zone_high = last_price + (entry_buffer * 0.35)
+        tp = last_price + target_move
+        sl = last_price - stop_move
         invalidation = sl
     else:
         entry = last_price
-        tp = last_price - base_move
-        sl = last_price + (base_move * 0.75)
+        entry_zone_low = last_price - (entry_buffer * 0.35)
+        entry_zone_high = last_price + entry_buffer
+        tp = last_price - target_move
+        sl = last_price + stop_move
         invalidation = sl
 
     return {
@@ -89,8 +98,10 @@ def evaluate_symbol(symbol, fast_rows, context_rows):
         "zscore": round(price_zscore, 4),
         "last_price": round(last_price, 6),
         "entry": round(entry, 6),
+        "entry_zone_low": round(entry_zone_low, 6),
+        "entry_zone_high": round(entry_zone_high, 6),
         "tp": round(tp, 6),
         "sl": round(sl, 6),
         "invalidation": round(invalidation, 6),
-        "reason": f"reversion setup accepted with stretch {round(stretch, 6)} and zscore {round(price_zscore, 4)}",
+        "reason": f"reversion setup accepted with stretch {round(stretch, 6)}, zscore {round(price_zscore, 4)} and score {round(score, 4)}",
     }

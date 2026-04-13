@@ -1,5 +1,6 @@
 from config import CANDLE_LIMIT, SYMBOLS, TIMEFRAME_CONTEXT, TIMEFRAME_FAST
 from data_fetcher import DataFetcher
+from history import append_signals, summarize_history
 from report import build_report, export_report
 from signal_engine import evaluate_symbol
 
@@ -14,8 +15,10 @@ def main():
         result = evaluate_symbol(symbol, fast_rows, context_rows)
         results.append(result)
 
-    export_report(results)
-    print(build_report(results))
+    append_signals(results)
+    history_summary = summarize_history()
+    export_report(results, history_summary=history_summary)
+    print(build_report(results, history_summary=history_summary))
 
 
 if __name__ == "__main__":
